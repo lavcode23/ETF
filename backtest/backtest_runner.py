@@ -1,6 +1,6 @@
 """
 backtest/backtest_runner.py
-Orchestrates the full pipeline: fetch → indicators → features → train → predict → score → allocate → simulate → metrics.
+Orchestrates the full pipeline: fetch -> indicators -> features -> train -> predict -> score -> allocate -> simulate -> metrics.
 """
 import pandas as pd
 from data.fetch_data import fetch_all, align
@@ -34,46 +34,46 @@ class BacktestRunner:
         self.feat_cols: list = []
         self.importance_df: pd.DataFrame = pd.DataFrame()
 
-    # ── public ───────────────────────────────────────────────────────
+    # -- public -------------------------------------------------------
     def run(self):
         print("=" * 70)
         print("BACKTEST PIPELINE")
         print("=" * 70)
 
-        print("\n[1] Fetching data …")
+        print("\n[1] Fetching data ...")
         raw = fetch_all(self.start_date, self.end_date)
         self.data = align(raw)
 
-        print("\n[2] Technical indicators …")
+        print("\n[2] Technical indicators ...")
         indic = add_indicators_all(self.data)
 
-        print("\n[3] Monthly features …")
+        print("\n[3] Monthly features ...")
         monthly = build_monthly(indic)
         monthly_t = add_targets(monthly)
 
-        print("\n[4] Walk-forward training …")
+        print("\n[4] Walk-forward training ...")
         self.models_dict, history, self.feat_cols = walk_forward(monthly_t)
         self.importance_df = feature_importance(self.models_dict)
 
-        print("\n[5] ML predictions …")
+        print("\n[5] ML predictions ...")
         predicted = predict_all(monthly_t, self.models_dict, self.feat_cols)
 
-        print("\n[6] Technical + final scores …")
+        print("\n[6] Technical + final scores ...")
         self.scored = add_scores(predicted)
-        self.monthly = monthly_t  # keep labelled version too
+        self.monthly = monthly_t
 
-        print("\n[7] Sector rotation allocations …")
+        print("\n[7] Sector rotation allocations ...")
         self.allocations = allocate(self.scored, top_n=self.top_n)
 
-        print("\n[8] Portfolio simulation …")
+        print("\n[8] Portfolio simulation ...")
         self.portfolio = simulate(self.data, self.allocations, self.initial_capital)
 
-        print("\n[9] Performance metrics …")
+        print("\n[9] Performance metrics ...")
         self.performance = compute(self.portfolio, self.data["NIFTYBEES"])
 
         self._print_summary()
 
-    # ── convenience accessors used by dashboard ──────────────────────
+    # -- convenience accessors used by dashboard ----------------------
     def current_allocation(self) -> pd.DataFrame | None:
         if self.allocations.empty:
             return None
@@ -90,7 +90,7 @@ class BacktestRunner:
         cols = ["ETF", "FinalScore", "ML_Probability", "TechScore", "RSI_14", "MACD_Hist", "ADX_14"]
         return top[[c for c in cols if c in top.columns]]
 
-    # ── private ──────────────────────────────────────────────────────
+    # -- private ------------------------------------------------------
     def _print_summary(self):
         p = self.performance
         print("\n" + "=" * 70)
