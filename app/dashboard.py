@@ -2,21 +2,21 @@
 app/dashboard.py
 Full Streamlit dashboard for the Indian ETF Sector Rotation system.
 
-sys.path is adjusted at the top so that every sibling package (data/, features/, …)
+sys.path is adjusted at the top so that every sibling package (data/, features/, ...)
 is importable regardless of where Streamlit mounts the repo.
 """
-# ──────────────────────────────────────────────────────────────────────
-# PATH FIX  ← this must come before any project import
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
+# PATH FIX  <- this must come before any project import
+# ----------------------------------------------------------------------
 import sys, os
 _THIS = os.path.dirname(os.path.abspath(__file__))          # .../app/
 _ROOT = os.path.dirname(_THIS)                              # repo root
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 # STANDARD LIB / THIRD-PARTY
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -25,15 +25,15 @@ from datetime import datetime
 import plotly.graph_objects as go
 import plotly.express as px
 
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 # PROJECT IMPORTS  (all safe now that ROOT is on path)
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 from backtest.backtest_runner import BacktestRunner
 from reports.excel_report import generate as gen_excel
 
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 # PAGE CONFIG
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 st.set_page_config(
     page_title="Indian ETF Sector Rotation",
     page_icon="📊",
@@ -50,19 +50,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 # CACHED BACKTEST
-# ──────────────────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="Running backtest … (first run can take a few minutes)")
+# ----------------------------------------------------------------------
+@st.cache_resource(show_spinner="Running backtest ... (first run can take a few minutes)")
 def _run(start: str, end: str, top_n: int, capital: int) -> BacktestRunner:
     r = BacktestRunner(start_date=start, end_date=end, top_n=top_n, capital=capital)
     r.run()
     return r
 
 
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 # PLOTLY HELPERS
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 def _fig_equity(runner: BacktestRunner):
     eq = runner.portfolio.get_equity()
     eq["Date"] = pd.to_datetime(eq["Date"])
@@ -77,7 +77,7 @@ def _fig_equity(runner: BacktestRunner):
     fig.add_trace(go.Scatter(x=b.index, y=b_norm,
                              name="NIFTYBEES", line=dict(color="#A23B72", width=2, dash="dash")))
     fig.update_layout(title="Equity Curve", xaxis_title="Date",
-                      yaxis_title="Value (₹)", hovermode="x unified",
+                      yaxis_title="Value", hovermode="x unified",
                       height=420, template="plotly_white")
     return fig
 
@@ -122,37 +122,36 @@ def _fig_sector_rotation(runner: BacktestRunner):
     return fig
 
 
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 # MAIN APP
-# ──────────────────────────────────────────────────────────────────────
+# ----------------------------------------------------------------------
 def main():
-    st.title("🚀 Indian ETF Sector Rotation System")
+    st.title("Indian ETF Sector Rotation System")
     st.caption("AI-powered monthly rotation across Indian sector ETFs")
 
-    # ── sidebar ──────────────────────────────────────────────────────
+    # -- sidebar ------------------------------------------------------
     with st.sidebar:
-        st.header("⚙️ Configuration")
+        st.header("Configuration")
         start = st.date_input("Start Date", value=datetime(2015, 1, 1))
         end   = st.date_input("End Date",   value=datetime.now())
         top_n = st.slider("Top N ETFs", 2, 5, 3)
-        capital = st.number_input("Initial Capital (₹)", value=1_000_000, step=100_000, min_value=100_000)
-        run_btn = st.button("🚀 Run Backtest", type="primary", use_container_width=True)
+        capital = st.number_input("Initial Capital (INR)", value=1_000_000, step=100_000, min_value=100_000)
+        run_btn = st.button("Run Backtest", type="primary", use_container_width=True)
 
         st.markdown("---")
         st.markdown("""
         **How it works**
         - XGBoost ML predicts outperformance
-        - Technical score: RSI · MACD · ADX · Bollinger
-        - FinalScore = 0.6 × ML + 0.4 × Tech
-        - Top ETFs chosen monthly; 10 % cash reserve
+        - Technical score: RSI, MACD, ADX, Bollinger
+        - FinalScore = 0.6 x ML + 0.4 x Tech
+        - Top ETFs chosen monthly; 10% cash reserve
         """)
 
-    # ── trigger / cache ──────────────────────────────────────────────
+    # -- trigger / cache ----------------------------------------------
     cache_key = f"{start}|{end}|{top_n}|{capital}"
     if "cache_key" not in st.session_state or st.session_state["cache_key"] != cache_key or run_btn:
         st.session_state["cache_key"] = cache_key
-        # clear the cached resource so it re-runs with new params
-         _run.clear()
+        _run.clear()
 
     runner: BacktestRunner = _run(
         start.strftime("%Y-%m-%d"),
@@ -167,20 +166,20 @@ def main():
 
     p = runner.performance
 
-    # ══════════════════════════════════════════════════════════════════
+    # ==================================================================
     # TABS
-    # ══════════════════════════════════════════════════════════════════
+    # ==================================================================
     tab_over, tab_perf, tab_alloc, tab_trades, tab_dl = st.tabs([
-        "📊 Overview", "📈 Performance", "🎯 Allocation", "💼 Trades", "📥 Download"
+        "Overview", "Performance", "Allocation", "Trades", "Download"
     ])
 
-    # ── Overview ─────────────────────────────────────────────────────
+    # -- Overview -----------------------------------------------------
     with tab_over:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Total Return",  f"{p['Total_Return_%']} %",
                   delta=f"vs Bench {p['Benchmark_Total_Return_%']} %")
         c2.metric("CAGR",          f"{p['CAGR_%']} %",
-                  delta=f"α = {p['Alpha_%']} %")
+                  delta=f"Alpha = {p['Alpha_%']} %")
         c3.metric("Sharpe",        f"{p['Sharpe_Ratio']}")
         c4.metric("Max Drawdown",  f"{p['Max_Drawdown_%']} %")
 
@@ -196,9 +195,9 @@ def main():
                                ("Calmar", "Calmar_Ratio"),
                                ("Monthly Win %", "Monthly_Win_Rate_%"),
                                ("Hit Rate %", "Hit_Rate_%")]:
-                st.markdown(f"**{label}:** {p.get(key, '—')}")
+                st.markdown(f"**{label}:** {p.get(key, '-')}")
 
-    # ── Performance ──────────────────────────────────────────────────
+    # -- Performance --------------------------------------------------
     with tab_perf:
         col_bars, col_rot = st.columns(2)
         with col_bars:
@@ -220,7 +219,7 @@ def main():
             fig_imp.update_layout(height=350, template="plotly_white")
             st.plotly_chart(fig_imp, use_container_width=True)
 
-    # ── Allocation ───────────────────────────────────────────────────
+    # -- Allocation ---------------------------------------------------
     with tab_alloc:
         cur = runner.current_allocation()
         if cur is not None and not cur.empty:
@@ -255,7 +254,7 @@ def main():
         else:
             st.info("No predictions available.")
 
-    # ── Trades ───────────────────────────────────────────────────────
+    # -- Trades -------------------------------------------------------
     with tab_trades:
         trades = runner.portfolio.get_trades()
         if trades.empty:
@@ -274,17 +273,17 @@ def main():
             st.dataframe(filtered.sort_values("Date", ascending=False),
                          use_container_width=True, hide_index=True)
 
-    # ── Download ─────────────────────────────────────────────────────
+    # -- Download -----------------------------------------------------
     with tab_dl:
-        st.subheader("📥 Export Excel Report")
-        st.markdown("Contains: Summary · Performance · Trade Log · Monthly Returns · Allocations · Feature Importance")
+        st.subheader("Export Excel Report")
+        st.markdown("Contains: Summary, Performance, Trade Log, Monthly Returns, Allocations, Feature Importance")
 
         if st.button("Generate & Download Report", type="primary"):
-            with st.spinner("Generating …"):
+            with st.spinner("Generating ..."):
                 path = gen_excel(runner, output_dir="reports")
             with open(path, "rb") as f:
                 st.download_button(
-                    "⬇️ Download Excel Report",
+                    "Download Excel Report",
                     data=f,
                     file_name=os.path.basename(path),
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
