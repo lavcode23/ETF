@@ -152,7 +152,7 @@ def main():
     if "cache_key" not in st.session_state or st.session_state["cache_key"] != cache_key or run_btn:
         st.session_state["cache_key"] = cache_key
         # clear the cached resource so it re-runs with new params
-        _run.clear_cache()
+         _run.clear()
 
     runner: BacktestRunner = _run(
         start.strftime("%Y-%m-%d"),
