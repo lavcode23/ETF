@@ -6,7 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use("Agg")          # no display needed
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -18,7 +18,7 @@ def _ensure_dir():
     os.makedirs(CHART_DIR, exist_ok=True)
 
 
-# ── helpers ──────────────────────────────────────────────────────────
+# -- helpers ----------------------------------------------------------
 def _equity_and_bench(runner):
     eq = runner.portfolio.get_equity()
     eq["Date"] = pd.to_datetime(eq["Date"])
@@ -28,7 +28,7 @@ def _equity_and_bench(runner):
     return eq, bench_slice, bench_norm
 
 
-# ── chart functions ──────────────────────────────────────────────────
+# -- chart functions --------------------------------------------------
 def equity_curve(runner):
     _ensure_dir()
     eq, bench_slice, bench_norm = _equity_and_bench(runner)
@@ -37,9 +37,9 @@ def equity_curve(runner):
     ax.plot(eq["Date"], eq["Portfolio_Value"], label="Strategy", color="#2E86AB", linewidth=2)
     ax.plot(bench_slice.index, bench_norm, label="NIFTYBEES", color="#A23B72", linewidth=2, linestyle="--")
     ax.set_title("Equity Curve vs Benchmark", fontsize=14, fontweight="bold")
-    ax.set_ylabel("Portfolio Value (₹)")
+    ax.set_ylabel("Portfolio Value (INR)")
     ax.legend()
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"₹{x/1e6:.1f}M"))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x/1e6:.1f}M"))
     plt.tight_layout()
     path = os.path.join(CHART_DIR, "equity_curve.png")
     fig.savefig(path, dpi=150)
@@ -120,7 +120,7 @@ def feature_importance_chart(runner):
 
 
 def generate_all(runner) -> dict[str, str | None]:
-    print("  Generating static charts …")
+    print("  Generating static charts ...")
     return {
         "equity_curve": equity_curve(runner),
         "drawdown": drawdown_chart(runner),
