@@ -6,22 +6,22 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
-SLIPPAGE = 0.001  # 0.1 % round-trip
+SLIPPAGE = 0.001  # 0.1% round-trip
 
 
 class Portfolio:
     def __init__(self, capital: float = 1_000_000):
         self.initial_capital = capital
         self.cash = capital
-        self.positions: dict[str, dict] = {}   # etf → {shares, entry_price, entry_date}
+        self.positions: dict[str, dict] = {}   # etf -> {shares, entry_price, entry_date}
         self.portfolio_value = capital
 
         self.equity_log: list[dict] = []       # one row per rebalance
         self.trade_log: list[dict] = []
 
-    # ── public ───────────────────────────────────────────────────────
+    # -- public -------------------------------------------------------
     def rebalance(self, date, allocs: pd.DataFrame, prices: dict[str, float]):
-        """Close everything, then open new positions per *allocs*."""
+        """Close everything, then open new positions per allocs."""
         self._close_all(date, prices)
         for _, row in allocs.iterrows():
             etf = row["ETF"]
@@ -63,7 +63,7 @@ class Portfolio:
         ret = m.pct_change() * 100
         return pd.DataFrame({"Date": m.index, "Portfolio_Value": m.values, "Monthly_Return": ret.values})
 
-    # ── private ──────────────────────────────────────────────────────
+    # -- private ------------------------------------------------------
     def _close_all(self, date, prices: dict[str, float]):
         for etf, pos in list(self.positions.items()):
             price = prices.get(etf, pos["entry_price"])
@@ -95,8 +95,8 @@ class Portfolio:
 
 def simulate(data: dict[str, pd.DataFrame], allocs: pd.DataFrame, capital: float = 1_000_000) -> Portfolio:
     """
-    Walk through every unique Selected_Date in *allocs*, look up month-end prices
-    from *data*, and call portfolio.rebalance().
+    Walk through every unique Selected_Date in allocs, look up month-end prices
+    from data, and call portfolio.rebalance().
     """
     port = Portfolio(capital)
     dates = sorted(allocs["Selected_Date"].unique())
@@ -117,5 +117,5 @@ def simulate(data: dict[str, pd.DataFrame], allocs: pd.DataFrame, capital: float
         day_allocs = allocs[allocs["Selected_Date"] == date]
         port.rebalance(date, day_allocs, prices)
 
-    print(f"  simulate: {len(port.trade_log)} trades, final value ₹{port.portfolio_value:,.0f}")
+    print(f"  simulate: {len(port.trade_log)} trades, final value INR {port.portfolio_value:,.0f}")
     return port
